@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'jh_bottom_sheet.dart';
-import 'jh_image_utils.dart';
+import 'hsk_bottom_sheet.dart';
 import 'package:photo/photo.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'dart:io';
@@ -9,25 +8,29 @@ import 'package:image_picker/image_picker.dart';
 const double itemSpace = 10.0;
 const double space = 5.0; //上下左右间距
 const double deleBtnWH = 20.0;
-const Color bgColor = Colors.yellow;
+const Color bgColor = Colors.white;
 
-typedef CallBack = void Function(List imgData);
+typedef CallBack = void Function(List imgData, List fileData);
 
-class JhPhotoPickerTool extends StatefulWidget {
+class HskPhotoPickerTool extends StatefulWidget {
   final double lfPaddingSpace; //外部设置的左右间距
   final CallBack callBack;
+  final int type;
 
-  JhPhotoPickerTool({
+  ///1 为单张选择   2 为多张选择
+  HskPhotoPickerTool({
     this.lfPaddingSpace,
     this.callBack,
+    this.type = 2,
   });
 
   @override
-  _JhPhotoPickerToolState createState() => _JhPhotoPickerToolState();
+  _HskPhotoPickerToolState createState() => _HskPhotoPickerToolState();
 }
 
-class _JhPhotoPickerToolState extends State<JhPhotoPickerTool> {
+class _HskPhotoPickerToolState extends State<HskPhotoPickerTool> {
   List imgData = List(); //图片list
+  List fileData = List(); //file 数据
   List<AssetEntity> imgPicked = [];
 
   @override
@@ -42,9 +45,14 @@ class _JhPhotoPickerToolState extends State<JhPhotoPickerTool> {
     // TODO: implement setState
     super.setState(fn);
     List data = List();
+    List file = List();
     data.addAll(imgData);
+    print(fileData);
+    file.addAll(fileData);
+
     data.removeAt(imgData.length - 1);
-    widget.callBack(data);
+    // file.removeAt(fileData.length);
+    widget.callBack(data, file);
   }
 
   @override
@@ -75,31 +83,46 @@ class _JhPhotoPickerToolState extends State<JhPhotoPickerTool> {
             itemCount: imgData.length,
             itemBuilder: (context, index) {
               if (index == imgData.length - 1) {
-                return addBtn(context, setState, imgData, imgPicked);
+                return addBtn(context, setState, imgData, imgPicked,
+                    widget.type, fileData);
               } else {
-                return imgItem(index, setState, imgData, imgPicked);
+                return imgItem(index, setState, imgData, imgPicked, fileData);
               }
             }));
   }
 }
 
 /** 添加按钮 */
-Widget addBtn(context, setState, imgData, imgPicked) {
+Widget addBtn(context, setState, imgData, imgPicked, type, files) {
   return GestureDetector(
-    child: Text('anniu'),
+    child: Image.asset(
+      'assets/addphoto@2x.png',
+      fit: BoxFit.fill,
+      // width: 90,
+      //height: 90,
+    ),
     onTap: () {
       //点击添加按钮
-      JhBottomSheet.showText(context, dataArr: ["拍照", "相册"], title: "请选择",
+      HskBottomSheet.showText(context, dataArr: ["拍照", "相册"], title: "请选择",
           clickCallback: (index, str) async {
-        if (index == 0) {
+        print(index);
+        if (index == 1) {
           var image = await ImagePicker.pickImage(source: ImageSource.camera);
           print(image);
-          imgData.insert(imgData.length - 1, image.absolute.path);
-//            imgPicked.add(image);
+          imgData.insert(imgData.length - 1, image.path);
+          files.insert(files.length, File(image.path));
           setState(() {});
         }
-        if (index == 1) {
-          pickAsset(context, setState, imgData, imgPicked);
+        if (index == 2) {
+          if (type == 2) {
+            pickAsset(context, setState, imgData, imgPicked, files);
+          } else {
+            var image =
+                await ImagePicker().getImage(source: ImageSource.gallery);
+            imgData.insert(imgData.length - 1, image.path);
+            files.insert(files.length, File(image.path));
+            setState(() {});
+          }
         }
       });
     },
@@ -107,22 +130,29 @@ Widget addBtn(context, setState, imgData, imgPicked) {
 }
 
 /** 图片和删除按钮 */
-Widget imgItem(index, setState, imgData, imgPicked) {
+Widget imgItem(index, setState, imgData, imgPicked, files) {
   return GestureDetector(
     child: Container(
       color: Colors.transparent,
       child: Stack(alignment: Alignment.topRight, children: <Widget>[
         ConstrainedBox(
-//                child:Image.file(imgData[index], fit: BoxFit.cover),
           child: Image.file(File(imgData[index]), fit: BoxFit.cover),
           constraints: BoxConstraints.expand(),
         ),
         GestureDetector(
-          child: Text('data'),
+          child: Image.asset(
+            'assets/delete_select.png',
+            fit: BoxFit.fitWidth,
+            width: 25,
+            height: 25,
+          ),
           onTap: () {
+            print(index);
+            print('点击删除');
             //点击删除按钮
             setState(() {
               imgData.removeAt(index);
+              files.removeAt(index);
 //                    imgPicked.removeAt(index);
             });
           },
@@ -136,7 +166,7 @@ Widget imgItem(index, setState, imgData, imgPicked) {
 }
 
 /** 多图选择 */
-void pickAsset(context, setState, imgData, imgPicked) async {
+void pickAsset(context, setState, imgData, imgPicked, files) async {
   final result = await PhotoPicker.pickAsset(
       context: context,
 //    pickedAssetList: imgPicked,
@@ -149,13 +179,8 @@ void pickAsset(context, setState, imgData, imgPicked) async {
 //      print(file.absolute.path)
       if (!imgData.contains(file.absolute.path)) {
         imgData.insert(imgData.length - 1, file.absolute.path);
+        files.insert(files.length, file);
       }
-
-//      imgData.insert(imgData.length-1, file);
-//      if (!imgData.contains(file)) {
-//        imgData.insert(imgData.length-1, file);
-//      }
-
     }
   }
   setState(() {});

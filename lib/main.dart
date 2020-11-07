@@ -1,14 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:pick_demo/imageChooseWidget.dart';
-//import 'package:multi_image_picker/asset.dart';
-import 'package:multi_image_picker/multi_image_picker.dart';
 import 'package:dio/dio.dart';
-import 'package:path/path.dart' as path;
-import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 
-import 'JhPhotoPickerTool.dart';
+import 'hskPhotoPickerTool.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 void main() {
   runApp(MyApp());
@@ -64,9 +59,9 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
-  List<File> mFileList = List();
+  List mFileList = List();
   List<MultipartFile> mSubmitFileList = List();
-  PickedFile mSelectedImageFile;
+  int type = 2;
 
   void _incrementCounter() {
     setState(() {
@@ -79,12 +74,21 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _uploadImage(File image) async {
+  void _uploadImage() async {
+    if (mFileList.length == 0) {
+      Fluttertoast.showToast(msg: '请选择图片', gravity: ToastGravity.CENTER);
+      return;
+    }
+    //上传多张图片
     for (int i = 0; i < mFileList.length; i++) {
-      // mSubmitFileList
-      //     .add(MultipartFile.fromFileSync(mFileList.elementAt(i).path));
+      mSubmitFileList
+          .add(MultipartFile.fromFileSync(mFileList.elementAt(i).path));
     }
 
+    //上传单张图片 类型需要转换 MultipartFile.fromFileSync(slectFile.path)
+    //File slectFile = File(mFileList[0].path);
+
+    print(mFileList);
     FormData formData = FormData.fromMap({"imgFile": mSubmitFileList});
 
     Dio dio = new Dio();
@@ -92,6 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
         data: formData);
 
     print(respone);
+    Fluttertoast.showToast(msg: '上传成功', gravity: ToastGravity.CENTER);
     // DioManager.getInstance().post(ServiceUrl.publishWeiBo, formData, (data) {
 
     // }, (error) {
@@ -101,12 +106,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    print('fileList的内容: $mFileList');
-    if (mSelectedImageFile != null) {
-      // mFileList.add(mSelectedImageFile);
-    }
-    mSelectedImageFile = null;
-
     // This method is rerun every time setState is called, for instance as done
     // by the _incrementCounter method above.
     //
@@ -114,92 +113,118 @@ class _MyHomePageState extends State<MyHomePage> {
     // fast, so that you can just rebuild anything that needs updating rather
     // than having to individually change instances of widgets.
     return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Container(
-          padding: EdgeInsets.fromLTRB(80, 10, 30, 10),
-          color: Colors.red,
-          child: JhPhotoPickerTool(
-            lfPaddingSpace: 110,
-            callBack: (var img) {
-              print("img-------------");
-              print(img.length);
-              print(img);
-              print("img-------------");
-            },
-          )),
-      // body: Center(
-      //   // Center is a layout widget. It takes a single child and positions it
-      //   // in the middle of the parent.
-      //   child: Column(
-      //     // Column is also a layout widget. It takes a list of children and
-      //     // arranges them vertically. By default, it sizes itself to fit its
-      //     // children horizontally, and tries to be as tall as its parent.
-      //     //
-      //     // Invoke "debug painting" (press "p" in the console, choose the
-      //     // "Toggle Debug Paint" action from the Flutter Inspector in Android
-      //     // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-      //     // to see the wireframe for each widget.
-      //     //
-      //     // Column has various properties to control how it sizes itself and
-      //     // how it positions its children. Here we use mainAxisAlignment to
-      //     // center the children vertically; the main axis here is the vertical
-      //     // axis because Columns are vertical (the cross axis would be
-      //     // horizontal).
-      //     mainAxisAlignment: MainAxisAlignment.center,
-      //     children: <Widget>[
-      //       RaisedButton(
-      //         child: Text('选择图片'),
-      //         onPressed: () {
-      //           showModalBottomSheet(
-      //               context: context,
-      //               builder: (context) {
-      //                 return ImageChooseWidget(
-      //                   type: 1,
-      //                   chooseImgCallBack: (value) {
-      //                     print(value);
-      //                   },
-      //                 );
-      //               });
-      //         },
-      //       ),
-      //       RaisedButton(
-      //         child: Text('选择多张图片'),
-      //         onPressed: () {
-      //           showModalBottomSheet(
-      //               context: context,
-      //               builder: (context) {
-      //                 return ImageChooseWidget(
-      //                   type: 2,
-      //                   chooseImgCallBack: (value) {
-      //                     print(value);
-      //                     print('拿到数据');
-      //                     setState(() {
-      //                       mSelectedImageFile = value;
-      //                     });
-      //                   },
-      //                 );
-      //               });
-      //         },
-      //       ),
-      //       Text(
-      //         'You have pushed the button this many times:',
-      //       ),
-      //       Text(
-      //         '$_counter',
-      //         style: Theme.of(context).textTheme.headline4,
-      //       ),
-      //     ],
-      //   ),
-      // ),
-      // floatingActionButton: FloatingActionButton(
-      //   onPressed: _incrementCounter,
-      //   tooltip: 'Increment',
-      //   child: Icon(Icons.add),
-      // ), // This trailing comma makes auto-formatting nicer for build methods.
-    );
+        appBar: AppBar(
+          // Here we take the value from the MyHomePage object that was created by
+          // the App.build method, and use it to set our appbar title.
+          title: Text(widget.title),
+        ),
+        body: Column(
+          children: <Widget>[
+            Container(
+                padding: EdgeInsets.fromLTRB(80, 10, 30, 10),
+                color: Colors.grey,
+                child: HskPhotoPickerTool(
+                  lfPaddingSpace: 110,
+                  type: type,
+                  callBack: (var img, var file) {
+                    mFileList = file;
+                  },
+                )),
+            RaisedButton(
+                child: Text(
+                  '上传照片',
+                  style: TextStyle(color: Colors.black, fontSize: 20),
+                ),
+                onPressed: () {
+                  _uploadImage();
+                }),
+            Row(
+              children: <Widget>[
+                RaisedButton(
+                  onPressed: () {
+                    type == 1;
+                  },
+                  child: Text('单张'),
+                ),
+                RaisedButton(
+                  onPressed: () {
+                    type == 2;
+                  },
+                  child: Text('多张'),
+                ),
+              ],
+            )
+          ],
+        )
+        // body: Center(
+        //   // Center is a layout widget. It takes a single child and positions it
+        //   // in the middle of the parent.
+        //   child: Column(
+        //     // Column is also a layout widget. It takes a list of children and
+        //     // arranges them vertically. By default, it sizes itself to fit its
+        //     // children horizontally, and tries to be as tall as its parent.
+        //     //
+        //     // Invoke "debug painting" (press "p" in the console, choose the
+        //     // "Toggle Debug Paint" action from the Flutter Inspector in Android
+        //     // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
+        //     // to see the wireframe for each widget.
+        //     //
+        //     // Column has various properties to control how it sizes itself and
+        //     // how it positions its children. Here we use mainAxisAlignment to
+        //     // center the children vertically; the main axis here is the vertical
+        //     // axis because Columns are vertical (the cross axis would be
+        //     // horizontal).
+        //     mainAxisAlignment: MainAxisAlignment.center,
+        //     children: <Widget>[
+        //       RaisedButton(
+        //         child: Text('选择图片'),
+        //         onPressed: () {
+        //           showModalBottomSheet(
+        //               context: context,
+        //               builder: (context) {
+        //                 return ImageChooseWidget(
+        //                   type: 1,
+        //                   chooseImgCallBack: (value) {
+        //                     print(value);
+        //                   },
+        //                 );
+        //               });
+        //         },
+        //       ),
+        //       RaisedButton(
+        //         child: Text('选择多张图片'),
+        //         onPressed: () {
+        //           showModalBottomSheet(
+        //               context: context,
+        //               builder: (context) {
+        //                 return ImageChooseWidget(
+        //                   type: 2,
+        //                   chooseImgCallBack: (value) {
+        //                     print(value);
+        //                     print('拿到数据');
+        //                     setState(() {
+        //                       mSelectedImageFile = value;
+        //                     });
+        //                   },
+        //                 );
+        //               });
+        //         },
+        //       ),
+        //       Text(
+        //         'You have pushed the button this many times:',
+        //       ),
+        //       Text(
+        //         '$_counter',
+        //         style: Theme.of(context).textTheme.headline4,
+        //       ),
+        //     ],
+        //   ),
+        // ),
+        // floatingActionButton: FloatingActionButton(
+        //   onPressed: _incrementCounter,
+        //   tooltip: 'Increment',
+        //   child: Icon(Icons.add),
+        // ), // This trailing comma makes auto-formatting nicer for build methods.
+        );
   }
 }

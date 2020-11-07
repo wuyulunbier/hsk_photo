@@ -1,8 +1,8 @@
 /** 
- *  jh_bottom_sheet.dart
+ *  shk_bottom_sheet.dart
  *
- *  Created by iotjin on 2020/02/16.
- *  description:  微信样式 底部弹框
+ *  Created by iotjin on 2020/11/07.
+ *  description:  底部弹框
  */
 import 'package:flutter/material.dart';
 
@@ -20,7 +20,7 @@ const Color _red_textColor = Color(0xFFE64242); //rgba(230,66,66,1)
 const Color _titleColor = Color(0xFF787878); //120
 const double _titleFontSize = 13.0;
 
-class JhBottomSheet {
+class HskBottomSheet {
   /**
       index 从上往下 1，2，3，取消是0
    */
