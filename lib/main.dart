@@ -66,23 +66,27 @@ class _MyHomePageState extends State<MyHomePage> {
       Fluttertoast.showToast(msg: '请选择图片', gravity: ToastGravity.CENTER);
       return;
     }
-    //上传多张图片
+
+    mSubmitFileList.clear();
     for (int i = 0; i < mFileList.length; i++) {
       mSubmitFileList
           .add(MultipartFile.fromFileSync(mFileList.elementAt(i).path));
     }
-
-    //上传单张图片 类型需要转换 MultipartFile.fromFileSync(slectFile.path)
-    //File slectFile = File(mFileList[0].path);
-
     print(mFileList);
     FormData formData = FormData.fromMap({"imgFile": mSubmitFileList});
-
     Dio dio = new Dio();
-    var respone = await dio.post<String>("http://apiwl3.atjubo.com/uppic.ashx",
-        data: formData);
+    try {
+      var respone = await dio
+          .post<String>("http://apiwl3.atjubo.com/uppic.ashx", data: formData);
+      print(respone);
+      setState(() {
+        mFileList.clear();
+        mSubmitFileList.clear();
+      });
+    } catch (exception) {
+      print(exception);
+    }
 
-    print(respone);
     Fluttertoast.showToast(msg: '上传成功', gravity: ToastGravity.CENTER);
   }
 
@@ -110,6 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   type: type,
                   callBack: (var img, var file) {
                     mFileList = file;
+                    //上传多张图片
                   },
                 )),
             RaisedButton(
